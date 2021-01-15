@@ -1,19 +1,17 @@
 package com.hxd.curator;
 
 
-
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-
+import org.apache.curator.framework.recipes.cache.NodeCache;
+import org.apache.curator.framework.recipes.cache.NodeCacheListener;
 import org.apache.curator.retry.ExponentialBackoffRetry;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 
-
-public class CuratorTest {
+public class CuratorWatchTest {
 
 
     private CuratorFramework client;
@@ -46,26 +44,6 @@ public class CuratorTest {
         System.out.println(1);
     }
 
-    /**
-     * 创建节点 持久 临时 顺序 数据
-     */
-    @Test
-    public void testCreate() throws Exception {
-
-
-
-        String s = client.create().forPath("/app1/app4 ", "init".getBytes());
-
-        System.out.println(s);
-
-    }
-
-    @Test
-    public void testGet() throws Exception {
-        byte[] data = client.getData().forPath("/app1/app2");
-        System.out.println(new String(data));
-
-    }
 
     @After
     public void close(){
@@ -74,5 +52,33 @@ public class CuratorTest {
             client.close();
         }
     }
+
+    @Test
+    public void testNodeCache() throws Exception {
+
+        //创建nodecache对象
+        NodeCache nodeCache = new NodeCache(client, "/app1/app2");
+        //创建监听器
+        nodeCache.getListenable().addListener(new NodeCacheListener() {
+            @Override
+            public void nodeChanged() throws Exception {
+                System.out.println("change node");
+                //获取修改后数据
+                byte[] data = nodeCache.getCurrentData().getData();
+                System.out.println(new String(data));
+            }
+        });
+        //开启监听，加载缓冲数据
+        nodeCache.start(true);
+
+        while (true){}
+
+    }
+
+
+    
+
+
+
 
 }
